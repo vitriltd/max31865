@@ -15,33 +15,32 @@ const round = (number, digits) => (Number(number.toPrecision(digits)));
  * @returns {number}
  */
 const resistanceToTemperature = (resistance, nominalResistance = 100) => {
-  //  This math originates from: http://www.analog.com/media/en/technical-documentation/application-notes/AN709_0.pdf
+  // Calculate temperature using the quadratic formula method
   const z1 = -RTD_A;
   const z2 = RTD_A * RTD_A - (4 * RTD_B);
   const z3 = (4 * RTD_B) / nominalResistance;
   const z4 = 2 * RTD_B;
-  let temp = z2 + (z3 * resistance);
-  temp = (Math.sqrt(temp) + z1) / z4;
-  if (temp >= 0) {
-    return round(temp, 6);
-  }
+  let tempQuadratic = z2 + (z3 * resistance);
+  tempQuadratic = (Math.sqrt(tempQuadratic) + z1) / z4;
 
+  // Calculate temperature using the polynomial method
   let rpoly = resistance;
-  // For the following math to work, nominal RTD resistance must be normalized to 100 ohms
   rpoly /= nominalResistance;
   rpoly *= 100;
 
-  temp = -242.02;
-  temp += 2.2228 * rpoly;
+  let tempPoly = -242.02;
+  tempPoly += 2.2228 * rpoly;
   rpoly *= resistance; // square
-  temp += 2.5859e-3 * rpoly;
+  tempPoly += 2.5859e-3 * rpoly;
   rpoly *= resistance; // ^3
-  temp -= 4.8260e-6 * rpoly;
+  tempPoly -= 4.8260e-6 * rpoly;
   rpoly *= resistance; // ^4
-  temp -= 2.8183e-8 * rpoly;
+  tempPoly -= 2.8183e-8 * rpoly;
   rpoly *= resistance; // ^5
-  temp += 1.5243e-10 * rpoly;
-  return round(temp, 6);
+  tempPoly += 1.5243e-10 * rpoly;
+
+  // Choose the appropriate result based on the calculated temperature
+  return round(tempQuadratic >= 0 ? tempQuadratic : tempPoly, 6);
 };
 
 /**
